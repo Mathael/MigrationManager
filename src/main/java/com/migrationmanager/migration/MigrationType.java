@@ -8,20 +8,10 @@ import static java.util.stream.Stream.of;
 public enum MigrationType {
 
     NONE,
-    PARTNER,
-    MEA,
-    CATEGORY,
-    DISCOUNT,
-    USER,
-    CLICK_TRACE,
-    PASSWORD_RESET,
-    PURCHASE,
-    COUPON,
-    URL_TRACKER;
+    GLOBAL_CREATE;
 
     /**
      * Translate database value to an ENUM
-     *
      * @param str The database Enum as string
      * @return The corresponding ENUM otherwise NONE
      */

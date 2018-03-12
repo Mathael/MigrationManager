@@ -14,7 +14,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class MigrationScriptHolder {
+public final class MigrationScriptHolder {
 
     private MigrationScript script;
     private List<ClassPathResource> resources;

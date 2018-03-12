@@ -35,15 +35,20 @@ import static java.util.Comparator.comparingInt;
 @Staging
 @Slf4j
 @Service
-@ConditionalOnProperty("${application.migration.enabled:false}")
+@ConditionalOnProperty(name = "application.migration.enabled", havingValue = "true")
 public class MigrationManagerImpl implements MigrationManager {
 
+    // SQL
     private static final String SQL_MIGRATION_SELECT_ALL = "SELECT * FROM migration";
     private static final String SQL_MIGRATION_UPDATE = "UPDATE migration SET lastMigrationTime = ? WHERE type = ?";
 
     @Autowired
     @Qualifier("migrationJdbcTemplate")
     private JdbcTemplate database;
+
+    public MigrationManagerImpl() {
+        log.info("Initializing migration manager");
+    }
 
     @Override
     public void initialize() {
@@ -66,7 +71,7 @@ public class MigrationManagerImpl implements MigrationManager {
     public List<Migration> scanDatabase() {
         final List<Migration> migrations;
         try {
-            migrations = database.queryForList(SQL_MIGRATION_SELECT_ALL, Migration.class);
+            migrations = database.query(SQL_MIGRATION_SELECT_ALL, new MigrationMapper());
         } catch (Exception ex) {
             log.error("Cannot query migration table.", ex);
             throw new MigrationFetchDatabaseException();
@@ -138,6 +143,7 @@ public class MigrationManagerImpl implements MigrationManager {
                     .filter(m -> m != null && m.getType() == script.getType())
                     .findFirst().orElse(null);
 
+            //if (migration == null || migration.getLastMigrationTime() < script.lastMigrationTime()) {
             if (migration != null && migration.getLastMigrationTime() < script.lastMigrationTime()) {
                 migrationScriptList.add(script);
             }
