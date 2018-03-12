@@ -21,7 +21,7 @@ import javax.sql.DataSource;
 public class DataSourceMigrationConfiguration {
 
     @Bean(name = "migrationDataSource")
-    @ConfigurationProperties(prefix="application.migration.datasource.mb")
+    @ConfigurationProperties(prefix="application.migration.datasource")
     public DataSource migrationDataSource() {
         return DataSourceBuilder.create().build();
     }
