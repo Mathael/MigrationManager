@@ -1,0 +1,5 @@
+DROP TABLE  IF EXISTS `users`;
+CREATE TABLE `users` (
+    `id` INTEGER(11) PRIMARY KEY,
+    `username` VARCHAR(20)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;

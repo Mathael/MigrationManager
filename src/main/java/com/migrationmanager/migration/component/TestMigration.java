@@ -12,12 +12,12 @@ import static java.util.Arrays.asList;
 public class TestMigration implements MigrationScript {
 
     private static final String[] FILES = {
-        "filename-test"
+        "create"
     };
 
     @Override
     public MigrationType getType() {
-        return MigrationType.NONE;
+        return MigrationType.GLOBAL_CREATE;
     }
 
     @Override
