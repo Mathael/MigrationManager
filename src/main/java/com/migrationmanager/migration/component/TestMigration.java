@@ -1,5 +1,6 @@
 package com.migrationmanager.migration.component;
 
+import com.migrationmanager.annotation.MigrationScriptFlag;
 import com.migrationmanager.migration.MigrationType;
 
 import java.util.List;
@@ -9,6 +10,7 @@ import static java.util.Arrays.asList;
 /**
  * @author LEBOC Philippe
  */
+@MigrationScriptFlag
 public class TestMigration implements MigrationScript {
 
     private static final String[] FILES = {
