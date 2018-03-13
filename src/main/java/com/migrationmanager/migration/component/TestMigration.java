@@ -11,7 +11,7 @@ import static java.util.Arrays.asList;
  * @author LEBOC Philippe
  */
 @MigrationScriptFlag
-public class TestMigration implements MigrationScript {
+public final class TestMigration implements MigrationScript {
 
     private static final String[] FILES = {
         "create"

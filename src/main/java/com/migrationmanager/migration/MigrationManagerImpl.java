@@ -4,18 +4,15 @@ import com.migrationmanager.annotation.MigrationScriptFlag;
 import com.migrationmanager.annotation.Prod;
 import com.migrationmanager.annotation.Staging;
 import com.migrationmanager.migration.component.MigrationScript;
-import com.migrationmanager.migration.component.TestMigration;
 import com.migrationmanager.migration.exception.MigrationFetchDatabaseException;
+import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptException;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
@@ -24,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static java.util.Comparator.comparing;
@@ -50,12 +48,15 @@ public class MigrationManagerImpl implements MigrationManager {
     private static final String SQL_MIGRATION_SELECT_ALL = "SELECT * FROM migration";
     private static final String SQL_MIGRATION_UPDATE = "UPDATE migration SET lastMigrationTime = ? WHERE type = ?";
 
+    // System message
+    private static final String WARN_MISSING_INTERFACE = "The class [{}] is annotated as MigrationScript but cannot be interpreted. It should implement MigrationScript interface !";
+
     @Autowired
     @Qualifier("migrationJdbcTemplate")
     private JdbcTemplate database;
 
     @Value("${application.migration.script.package}")
-    public String[] packageToScans;
+    public String[] packagesToScan;
 
     public MigrationManagerImpl() {
         log.info("Initializing migration manager");
@@ -93,18 +94,25 @@ public class MigrationManagerImpl implements MigrationManager {
     @Override
     public List<MigrationScript> scanMigrationPackage() {
 
-        final ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(true);
-        scanner.addIncludeFilter(new AnnotationTypeFilter(MigrationScriptFlag.class));
+        final List<MigrationScript> scripts = new ArrayList<>();
+        final Reflections reflections = new Reflections(packagesToScan);
+        final Set<Class<?>> annotated = reflections.getTypesAnnotatedWith(MigrationScriptFlag.class);
 
-        for (String packageToScan : packageToScans)
-            for (BeanDefinition bd : scanner.findCandidateComponents(packageToScan)) {
-                log.info(bd.getBeanClassName());
-                if (MigrationScript.class.isAssignableFrom(bd.getClass()))
-                    log.info("is implementing MigrationScript interface");
+        annotated.forEach(aClass -> {
+            if (!MigrationScript.class.isAssignableFrom(aClass)) {
+                log.warn(WARN_MISSING_INTERFACE, aClass.getName());
             }
 
-        final List<MigrationScript> scripts = new ArrayList<>();
-        scripts.add(new TestMigration());
+            try {
+                final MigrationScript script = (MigrationScript) aClass.newInstance();
+                scripts.add(script);
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                log.warn("The class should contains a public constructor without args", e);
+            }
+        });
+
         return scripts;
     }
 
