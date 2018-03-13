@@ -1,9 +1,6 @@
 package com.migrationmanager.migration;
 
 import com.migrationmanager.migration.component.MigrationScript;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.core.io.ClassPathResource;
 
 import java.util.List;
@@ -11,9 +8,6 @@ import java.util.List;
 /**
  * @author LEBOC Philippe
  */
-@Getter
-@Setter
-@NoArgsConstructor
 public final class MigrationScriptHolder {
 
     private MigrationScript script;
@@ -24,5 +18,29 @@ public final class MigrationScriptHolder {
         this.script = script;
         this.resources = resources;
         this.state = MigrationState.NOT_DONE;
+    }
+
+    public MigrationScript getScript() {
+        return script;
+    }
+
+    public void setScript(MigrationScript script) {
+        this.script = script;
+    }
+
+    public List<ClassPathResource> getResources() {
+        return resources;
+    }
+
+    public void setResources(List<ClassPathResource> resources) {
+        this.resources = resources;
+    }
+
+    public MigrationState getState() {
+        return state;
+    }
+
+    public void setState(MigrationState state) {
+        this.state = state;
     }
 }

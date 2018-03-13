@@ -1,25 +1,33 @@
 package com.migrationmanager.migration;
 
-import com.migrationmanager.documentation.ColumnInfo;
-import com.migrationmanager.documentation.TableInfo;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 /**
  * @author LEBOC Philippe
  */
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@TableInfo(name = "migration")
 public class Migration {
 
-    @ColumnInfo(name = "type", descr = "Primary Key. The migration type used to prevent from using str as descriptor")
     private MigrationType type;
-
-    @ColumnInfo(name = "lastMigrationTime", descr = "The last migration timestamp")
     private long lastMigrationTime;
+
+    public Migration() {}
+
+    public Migration(MigrationType type, long lastMigrationTime) {
+        this.type = type;
+        this.lastMigrationTime = lastMigrationTime;
+    }
+
+    public MigrationType getType() {
+        return type;
+    }
+
+    public void setType(MigrationType type) {
+        this.type = type;
+    }
+
+    public long getLastMigrationTime() {
+        return lastMigrationTime;
+    }
+
+    public void setLastMigrationTime(long lastMigrationTime) {
+        this.lastMigrationTime = lastMigrationTime;
+    }
 }

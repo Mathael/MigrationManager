@@ -5,7 +5,8 @@ import com.migrationmanager.annotation.Staging;
 import com.migrationmanager.migration.component.MigrationScript;
 import com.migrationmanager.migration.component.TestMigration;
 import com.migrationmanager.migration.exception.MigrationFetchDatabaseException;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -33,10 +34,12 @@ import static java.util.Comparator.comparingInt;
  */
 @Prod
 @Staging
-@Slf4j
 @Service
 @ConditionalOnProperty(name = "application.migration.enabled", havingValue = "true")
 public class MigrationManagerImpl implements MigrationManager {
+
+    // Logger
+    private static final Logger log = LoggerFactory.getLogger(MigrationManagerImpl.class);
 
     // SQL
     private static final String SQL_MIGRATION_SELECT_ALL = "SELECT * FROM migration";
