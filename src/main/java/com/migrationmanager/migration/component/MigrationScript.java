@@ -26,17 +26,4 @@ public interface MigrationScript {
      * @return a timestamp set manually by developer
      */
     long lastMigrationTime();
-
-    /**
-     * Define execution order
-     * The execution order will execute the lowest order at first time
-     * Please, don't set negative values
-     *
-     * This method must be improved to use enumeration instead of integer
-     *
-     * @return The natural value that define the execution order
-     */
-    default int getOrder() {
-        return 1;
-    }
 }

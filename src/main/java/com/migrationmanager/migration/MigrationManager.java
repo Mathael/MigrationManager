@@ -35,14 +35,13 @@ public interface MigrationManager {
      * Scan migration package for migrations classes
      * @return every class found in the scanned package
      */
-    List<MigrationScript> scanMigrationPackage();
+    List<MigrationScriptHolder> scanMigrationPackage();
 
     /**
      * Search SQL files exposed in "resources/migration/*.sql" folder
      * @param scriptList The script list candidates that contains files to be found in classpath
-     * @return Holder that contains MigrationScript and the classpath resources found
      */
-    List<MigrationScriptHolder> scanResourceScript(final List<MigrationScript> scriptList);
+    void scanResourceScript(final List<MigrationScriptHolder> scriptList);
 
     /**
      * Execute SQL scripts

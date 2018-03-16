@@ -3,6 +3,7 @@ package com.migrationmanager.migration;
 import com.migrationmanager.migration.component.MigrationScript;
 import org.springframework.core.io.ClassPathResource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,14 +12,37 @@ import java.util.List;
 public final class MigrationScriptHolder {
 
     private MigrationScript script;
+    private MigrationPriority priority;
+    private int order;
+
     private List<ClassPathResource> resources;
     private MigrationState state;
 
-    public MigrationScriptHolder(MigrationScript script, List<ClassPathResource> resources) {
+    /**
+     * The default constructor include the Script and annotation attributes (default values if any)
+     * @param script The script
+     * @param priority The default or override priority
+     * @param order The default or override order
+     */
+    public MigrationScriptHolder(MigrationScript script, MigrationPriority priority, int order) {
         this.script = script;
-        this.resources = resources;
+        this.priority = priority;
+        this.order = order;
         this.state = MigrationState.NOT_DONE;
+        this.resources = new ArrayList<>();
     }
+
+    // Method
+
+    /**
+     * Define the valid condition for a script to be executed
+     * @return The execution election validity
+     */
+    public boolean isValid() {
+        return script != null && priority != null && resources != null && !resources.isEmpty() && state == MigrationState.NOT_DONE;
+    }
+
+    // Getter & Setters
 
     public MigrationScript getScript() {
         return script;
@@ -26,6 +50,22 @@ public final class MigrationScriptHolder {
 
     public void setScript(MigrationScript script) {
         this.script = script;
+    }
+
+    public MigrationPriority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(MigrationPriority priority) {
+        this.priority = priority;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
     }
 
     public List<ClassPathResource> getResources() {

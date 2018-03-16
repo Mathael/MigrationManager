@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -64,19 +65,18 @@ public class MigrationManagerImpl implements MigrationManager {
 
     @Override
     public void initialize() {
+
+        // TODO: re visit this code
+
         final List<Migration> migrations = scanDatabase();
-        final List<MigrationScript> scripts = scanMigrationPackage();
-        final List<MigrationScript> migrationScriptList = new ArrayList<>();
+        final List<MigrationScriptHolder> scripts = scanMigrationPackage();
 
-        scripts
-            .stream()
-            .sorted(comparing(MigrationScript::getOrder))
-            .forEachOrdered(getMigrationScriptToBeExecuted(migrations, migrationScriptList));
+        final List<MigrationScript> list = new ArrayList<>();
+        scripts.stream().forEach(getMigrationScriptToBeExecuted(migrations, list));
 
-        final List<MigrationScriptHolder> scriptHolders = scanResourceScript(migrationScriptList);
-
-        migrate(scriptHolders);
-        updateMigrationTable(scriptHolders);
+        scanResourceScript(scripts);
+        migrate(scripts);
+        updateMigrationTable(scripts);
     }
 
     @Override
@@ -92,22 +92,33 @@ public class MigrationManagerImpl implements MigrationManager {
     }
 
     @Override
-    public List<MigrationScript> scanMigrationPackage() {
+    public List<MigrationScriptHolder> scanMigrationPackage() {
 
-        final List<MigrationScript> scripts = new ArrayList<>();
+        final List<MigrationScriptHolder> scripts = new ArrayList<>();
         final Reflections reflections = new Reflections(packagesToScan);
         final Set<Class<?>> annotated = reflections.getTypesAnnotatedWith(MigrationScriptFlag.class);
 
-        annotated.forEach(aClass -> {
+        annotated.forEach(aClass ->
+        {
             if (!MigrationScript.class.isAssignableFrom(aClass)) {
                 log.warn(WARN_MISSING_INTERFACE, aClass.getName());
+                return;
+            }
+
+            final MigrationScriptFlag flag = (MigrationScriptFlag) Arrays.stream(aClass.getAnnotations())
+                    .filter(annotation -> annotation instanceof MigrationScriptFlag)
+                    .findFirst().orElse(null);
+
+            if(null == flag) {
+                log.warn("An annotation cannot disappear at Runtime !");
+                return;
             }
 
             try {
                 final MigrationScript script = (MigrationScript) aClass.newInstance();
-                scripts.add(script);
+                scripts.add(new MigrationScriptHolder(script, flag.priority(), flag.order()));
             } catch (InstantiationException e) {
-                e.printStackTrace();
+                log.warn("Cannot instantiate the class : " + aClass.getName(), e);
             } catch (IllegalAccessException e) {
                 log.warn("The class should contains a public constructor without args", e);
             }
@@ -117,28 +128,24 @@ public class MigrationManagerImpl implements MigrationManager {
     }
 
     @Override
-    public List<MigrationScriptHolder> scanResourceScript(final List<MigrationScript> scriptList) {
-        final List<MigrationScriptHolder> holders = new ArrayList<>();
-        for (MigrationScript script : scriptList) {
-            final List<ClassPathResource> files = new ArrayList<>();
-            for (String s : script.migrationScripts()) {
+    public void scanResourceScript(final List<MigrationScriptHolder> scriptList) {
+        for (MigrationScriptHolder script : scriptList) {
+            for (String s : script.getScript().migrationScripts()) {
                 if (s != null && !s.trim().isEmpty()) {
                     final ClassPathResource file = new ClassPathResource("migration/" + s + ".sql");
                     if (file.exists()) {
-                        files.add(file);
+                        script.getResources().add(file);
                     } else {
                         log.warn("file [{}] does not exist", "migration/" + s + ".sql");
                     }
                 }
             }
-            holders.add(new MigrationScriptHolder(script, files));
         }
-        return holders;
     }
 
     @Override
     public void migrate(final List<MigrationScriptHolder> scriptHolders) {
-        scriptHolders.stream().sorted(comparingInt(m -> m.getScript().getOrder())).forEachOrdered(holder -> {
+        scriptHolders.forEach(holder -> {
             for (ClassPathResource file : holder.getResources()) {
                 try {
                     log.info("Executing migration script [{}] : files [{}]", holder.getScript().getType().name(), file.getFilename());
@@ -173,7 +180,6 @@ public class MigrationManagerImpl implements MigrationManager {
                     .filter(m -> m != null && m.getType() == script.getType())
                     .findFirst().orElse(null);
 
-            //if (migration == null || migration.getLastMigrationTime() < script.lastMigrationTime()) {
             if (migration != null && migration.getLastMigrationTime() < script.lastMigrationTime()) {
                 migrationScriptList.add(script);
             }
