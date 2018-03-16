@@ -25,9 +25,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import static java.util.Comparator.comparing;
-import static java.util.Comparator.comparingInt;
-
 /**
  * Migration Manager will never start on @Dev profile
  * The Manager will start on all theses rules (inclusive)
@@ -65,18 +62,15 @@ public class MigrationManagerImpl implements MigrationManager {
 
     @Override
     public void initialize() {
-
-        // TODO: re visit this code
-
         final List<Migration> migrations = scanDatabase();
         final List<MigrationScriptHolder> scripts = scanMigrationPackage();
+        final List<MigrationScriptHolder> selected = new ArrayList<>();
 
-        final List<MigrationScript> list = new ArrayList<>();
-        scripts.stream().forEach(getMigrationScriptToBeExecuted(migrations, list));
+        scripts.forEach(getMigrationScriptToBeExecuted(migrations, selected));
 
-        scanResourceScript(scripts);
-        migrate(scripts);
-        updateMigrationTable(scripts);
+        scanResourceScript(selected);
+        migrate(selected);
+        updateMigrationTable(selected);
     }
 
     @Override
@@ -173,15 +167,15 @@ public class MigrationManagerImpl implements MigrationManager {
      * @param migrationScriptList The script list to be populated with the scripts that must be executed
      * @return the list of script that are waiting to upgrade
      */
-    private Consumer<MigrationScript> getMigrationScriptToBeExecuted(final List<Migration> migrations, final List<MigrationScript> migrationScriptList) {
-        return script -> {
+    private Consumer<MigrationScriptHolder> getMigrationScriptToBeExecuted(final List<Migration> migrations, final List<MigrationScriptHolder> migrationScriptList) {
+        return holder -> {
             final Migration migration = migrations
                     .stream()
-                    .filter(m -> m != null && m.getType() == script.getType())
+                    .filter(m -> m != null && m.getType() == holder.getScript().getType())
                     .findFirst().orElse(null);
 
-            if (migration != null && migration.getLastMigrationTime() < script.lastMigrationTime()) {
-                migrationScriptList.add(script);
+            if (migration != null && migration.getLastMigrationTime() < holder.getScript().lastMigrationTime()) {
+                migrationScriptList.add(holder);
             }
         };
     }
