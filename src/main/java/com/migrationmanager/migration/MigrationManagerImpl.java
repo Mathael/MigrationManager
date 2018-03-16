@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -42,6 +43,9 @@ public class MigrationManagerImpl implements MigrationManager {
     // Logger
     private static final Logger log = LoggerFactory.getLogger(MigrationManagerImpl.class);
 
+    // Logger messages
+    private static final String ERROR_CANNOT_QUERY_MIGRATION_TABLE = "Cannot query migration table.";
+
     // SQL
     private static final String SQL_MIGRATION_SELECT_ALL = "SELECT * FROM migration";
     private static final String SQL_MIGRATION_UPDATE = "UPDATE migration SET lastMigrationTime = ? WHERE type = ?";
@@ -54,7 +58,10 @@ public class MigrationManagerImpl implements MigrationManager {
     private JdbcTemplate database;
 
     @Value("${application.migration.script.package}")
-    public String[] packagesToScan;
+    private String[] packagesToScan;
+
+    @Value("${application.migration.database.file.extension:sql}")
+    private String databaseFileExtension;
 
     public MigrationManagerImpl() {
         log.info("Initializing migration manager");
@@ -79,7 +86,7 @@ public class MigrationManagerImpl implements MigrationManager {
         try {
             migrations = database.query(SQL_MIGRATION_SELECT_ALL, new MigrationMapper());
         } catch (Exception ex) {
-            log.error("Cannot query migration table.", ex);
+            log.error(ERROR_CANNOT_QUERY_MIGRATION_TABLE, ex);
             throw new MigrationFetchDatabaseException();
         }
         return migrations;
@@ -103,7 +110,7 @@ public class MigrationManagerImpl implements MigrationManager {
                     .filter(annotation -> annotation instanceof MigrationScriptFlag)
                     .findFirst().orElse(null);
 
-            if(null == flag) {
+            if (null == flag) {
                 log.warn("An annotation cannot disappear at Runtime !");
                 return;
             }
@@ -123,14 +130,14 @@ public class MigrationManagerImpl implements MigrationManager {
 
     @Override
     public void scanResourceScript(final List<MigrationScriptHolder> scriptList) {
-        for (MigrationScriptHolder script : scriptList) {
-            for (String s : script.getScript().migrationScripts()) {
+        for (final MigrationScriptHolder script : scriptList) {
+            for (final String s : script.getScript().migrationScripts()) {
                 if (s != null && !s.trim().isEmpty()) {
                     final ClassPathResource file = new ClassPathResource("migration/" + s + ".sql");
                     if (file.exists()) {
                         script.getResources().add(file);
                     } else {
-                        log.warn("file [{}] does not exist", "migration/" + s + ".sql");
+                        log.warn("file [{}] does not exist", "migration/" + s + "." + databaseFileExtension);
                     }
                 }
             }
@@ -139,17 +146,21 @@ public class MigrationManagerImpl implements MigrationManager {
 
     @Override
     public void migrate(final List<MigrationScriptHolder> scriptHolders) {
-        scriptHolders.forEach(holder -> {
-            for (ClassPathResource file : holder.getResources()) {
-                try {
-                    log.info("Executing migration script [{}] : files [{}]", holder.getScript().getType().name(), file.getFilename());
-                    ScriptUtils.executeSqlScript(database.getDataSource().getConnection(), file);
-                    holder.setState(MigrationState.DONE);
-                } catch (ScriptException | SQLException ex) {
-                    log.error("Cannot execute script [" + file.getFilename() + "]", ex);
-                }
-            }
-        });
+        scriptHolders
+                .stream()
+                .sorted(Comparator.<MigrationScriptHolder>comparingInt(s -> s.getPriority().ordinal()).thenComparingInt(MigrationScriptHolder::getOrder))
+                .forEachOrdered(holder ->
+                {
+                    for (final ClassPathResource file : holder.getResources()) {
+                        try {
+                            log.info("Executing migration script [{}] [{}] [{}] : files [{}]", holder.getPriority(), holder.getOrder(), holder.getScript().getType().name(), file.getFilename());
+                            ScriptUtils.executeSqlScript(database.getDataSource().getConnection(), file);
+                            holder.setState(MigrationState.DONE);
+                        } catch (ScriptException | SQLException ex) {
+                            log.error("Cannot execute script [" + file.getFilename() + "]", ex);
+                        }
+                    }
+                });
     }
 
     @Override
