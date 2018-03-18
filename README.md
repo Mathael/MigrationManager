@@ -23,5 +23,27 @@ TODO suite à venir
 ## Installation
 TODO
 
+#### Spring config
+>@Bean  
+public MigrationManager migrationManager() {  
+    return new MigrationManagerImpl();  
+}  
+
+#### Mandatory SQL
+>DROP TABLE IF EXISTS `migration`;  
+ CREATE TABLE `migration` (  
+   `type` varchar(100) NOT NULL,  
+   `last_migration_time` int(11) NOT NULL,  
+   PRIMARY KEY (`type`)  
+ ) ENGINE=MyISAM DEFAULT CHARSET=utf8;  
+
+#### Properties
+>application.migration.script.package =   
+ application.migration.database.file.location = migration  
+ application.migration.database.file.extension = sql  
+
 ## Utilisation
+TODO
+
+#### Priority & Order
 TODO
