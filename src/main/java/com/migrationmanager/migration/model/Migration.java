@@ -1,4 +1,6 @@
-package com.migrationmanager.migration;
+package com.migrationmanager.migration.model;
+
+import com.migrationmanager.migration.enums.MigrationType;
 
 /**
  * @author LEBOC Philippe

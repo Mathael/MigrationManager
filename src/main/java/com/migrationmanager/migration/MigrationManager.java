@@ -1,6 +1,7 @@
 package com.migrationmanager.migration;
 
-import com.migrationmanager.migration.component.MigrationScript;
+import com.migrationmanager.migration.holder.MigrationScriptHolder;
+import com.migrationmanager.migration.model.Migration;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public interface MigrationManager {
      * - Scan database for corresponding table
      * - Scan migration package for migrations classes
      * - Compare timestamp to select to migration that will be performed
-     * - Search SQL files exposed in "resources/migration/*.sql" folder
+     * - Search SQL files
      * - Execute SQL scripts
      * - Update SQL migration table
      */
@@ -38,7 +39,7 @@ public interface MigrationManager {
     List<MigrationScriptHolder> scanMigrationPackage();
 
     /**
-     * Search SQL files exposed in "resources/migration/*.sql" folder
+     * Search SQL files
      * @param scriptList The script list candidates that contains files to be found in classpath
      */
     void scanResourceScript(final List<MigrationScriptHolder> scriptList);

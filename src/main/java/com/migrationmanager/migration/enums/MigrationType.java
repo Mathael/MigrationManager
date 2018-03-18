@@ -1,4 +1,4 @@
-package com.migrationmanager.migration;
+package com.migrationmanager.migration.enums;
 
 import static java.util.stream.Stream.of;
 
@@ -7,8 +7,7 @@ import static java.util.stream.Stream.of;
  */
 public enum MigrationType {
 
-    NONE,
-    GLOBAL_CREATE;
+    NONE;
 
     /**
      * Translate database value to an ENUM

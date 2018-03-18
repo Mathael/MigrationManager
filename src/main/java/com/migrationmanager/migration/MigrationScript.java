@@ -1,6 +1,6 @@
-package com.migrationmanager.migration.component;
+package com.migrationmanager.migration;
 
-import com.migrationmanager.migration.MigrationType;
+import com.migrationmanager.migration.enums.MigrationType;
 
 import java.util.List;
 

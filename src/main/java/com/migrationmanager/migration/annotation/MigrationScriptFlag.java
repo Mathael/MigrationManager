@@ -1,6 +1,6 @@
-package com.migrationmanager.annotation;
+package com.migrationmanager.migration.annotation;
 
-import com.migrationmanager.migration.MigrationPriority;
+import com.migrationmanager.migration.enums.MigrationPriority;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

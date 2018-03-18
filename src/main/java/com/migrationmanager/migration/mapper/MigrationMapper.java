@@ -1,11 +1,12 @@
-package com.migrationmanager.migration;
+package com.migrationmanager.migration.mapper;
 
+import com.migrationmanager.migration.model.Migration;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static com.migrationmanager.migration.MigrationType.toMigrationType;
+import static com.migrationmanager.migration.enums.MigrationType.toMigrationType;
 
 /**
  * @author LEBOC Philippe

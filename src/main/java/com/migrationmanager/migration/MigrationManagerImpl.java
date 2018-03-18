@@ -1,17 +1,16 @@
 package com.migrationmanager.migration;
 
-import com.migrationmanager.annotation.MigrationScriptFlag;
-import com.migrationmanager.annotation.Prod;
-import com.migrationmanager.annotation.Staging;
-import com.migrationmanager.migration.component.MigrationScript;
+import com.migrationmanager.migration.annotation.MigrationScriptFlag;
+import com.migrationmanager.migration.enums.MigrationState;
 import com.migrationmanager.migration.exception.MigrationFetchDatabaseException;
+import com.migrationmanager.migration.holder.MigrationScriptHolder;
+import com.migrationmanager.migration.model.Migration;
+import com.migrationmanager.migration.mapper.MigrationMapper;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptException;
@@ -34,10 +33,7 @@ import java.util.function.Consumer;
  *
  * @author LEBOC Philippe
  */
-@Prod
-@Staging
 @Service
-@ConditionalOnProperty(name = "application.migration.enabled", havingValue = "true")
 public class MigrationManagerImpl implements MigrationManager {
 
     // Logger
@@ -54,17 +50,19 @@ public class MigrationManagerImpl implements MigrationManager {
     private static final String WARN_MISSING_INTERFACE = "The class [{}] is annotated as MigrationScript but cannot be interpreted. It should implement MigrationScript interface !";
 
     @Autowired
-    @Qualifier("migrationJdbcTemplate")
     private JdbcTemplate database;
 
     @Value("${application.migration.script.package}")
     private String[] packagesToScan;
 
+    @Value("${application.migration.database.file.location:migration}")
+    private String databaseFileLocation;
+
     @Value("${application.migration.database.file.extension:sql}")
     private String databaseFileExtension;
 
     public MigrationManagerImpl() {
-        log.info("Initializing migration manager");
+        log.info("Migration Manager Bean created");
     }
 
     @Override
@@ -133,7 +131,7 @@ public class MigrationManagerImpl implements MigrationManager {
         for (final MigrationScriptHolder script : scriptList) {
             for (final String s : script.getScript().migrationScripts()) {
                 if (s != null && !s.trim().isEmpty()) {
-                    final ClassPathResource file = new ClassPathResource("migration/" + s + ".sql");
+                    final ClassPathResource file = new ClassPathResource(databaseFileLocation + "/" + s + "." + databaseFileExtension);
                     if (file.exists()) {
                         script.getResources().add(file);
                     } else {
@@ -153,7 +151,7 @@ public class MigrationManagerImpl implements MigrationManager {
                 {
                     for (final ClassPathResource file : holder.getResources()) {
                         try {
-                            log.info("Executing migration script [{}] [{}] [{}] : files [{}]", holder.getPriority(), holder.getOrder(), holder.getScript().getType().name(), file.getFilename());
+                            log.info("Executing migration script priority = [{}] order = [{}] type = [{}] : files [{}]", holder.getPriority(), holder.getOrder(), holder.getScript().getType().name(), file.getFilename());
                             ScriptUtils.executeSqlScript(database.getDataSource().getConnection(), file);
                             holder.setState(MigrationState.DONE);
                         } catch (ScriptException | SQLException ex) {
