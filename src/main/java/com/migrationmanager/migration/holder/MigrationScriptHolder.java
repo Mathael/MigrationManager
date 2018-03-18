@@ -1,6 +1,8 @@
-package com.migrationmanager.migration;
+package com.migrationmanager.migration.holder;
 
-import com.migrationmanager.migration.component.MigrationScript;
+import com.migrationmanager.migration.MigrationScript;
+import com.migrationmanager.migration.enums.MigrationPriority;
+import com.migrationmanager.migration.enums.MigrationState;
 import org.springframework.core.io.ClassPathResource;
 
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package com.migrationmanager.migration;
+package com.migrationmanager.migration.enums;
 
 /**
  * @author LEBOC Philippe
