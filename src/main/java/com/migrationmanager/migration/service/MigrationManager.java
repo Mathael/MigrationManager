@@ -1,4 +1,4 @@
-package com.migrationmanager.migration;
+package com.migrationmanager.migration.service;
 
 import com.migrationmanager.migration.holder.MigrationScriptHolder;
 import com.migrationmanager.migration.model.Migration;

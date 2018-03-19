@@ -1,16 +1,16 @@
-package com.migrationmanager.migration;
+package com.migrationmanager.migration.service;
 
+import com.migrationmanager.migration.MigrationScript;
 import com.migrationmanager.migration.annotation.MigrationScriptFlag;
 import com.migrationmanager.migration.enums.MigrationState;
 import com.migrationmanager.migration.exception.MigrationFetchDatabaseException;
 import com.migrationmanager.migration.holder.MigrationScriptHolder;
-import com.migrationmanager.migration.model.Migration;
 import com.migrationmanager.migration.mapper.MigrationMapper;
+import com.migrationmanager.migration.model.Migration;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptException;
@@ -26,11 +26,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /**
- * Migration Manager will never start on @Dev profile
- * The Manager will start on all theses rules (inclusive)
- * - Staging or Prod Spring profiles
- * - application.migration.enabled = true in properties OR override by JVM property
- *
  * @author LEBOC Philippe
  */
 @Service
@@ -52,16 +47,14 @@ public class MigrationManagerImpl implements MigrationManager {
     @Autowired
     private JdbcTemplate database;
 
-    @Value("${application.migration.script.package}")
     private String[] packagesToScan;
+    private String filesLocation;
+    private String filesExtension;
 
-    @Value("${application.migration.database.file.location:migration}")
-    private String databaseFileLocation;
-
-    @Value("${application.migration.database.file.extension:sql}")
-    private String databaseFileExtension;
-
-    public MigrationManagerImpl() {
+    public MigrationManagerImpl(final String[] packagesToScan, final String filesLocation, final String filesExtension) {
+        this.packagesToScan = packagesToScan;
+        this.filesExtension = filesExtension;
+        this.filesLocation = filesLocation;
         log.info("Migration Manager Bean created");
     }
 
@@ -131,11 +124,11 @@ public class MigrationManagerImpl implements MigrationManager {
         for (final MigrationScriptHolder script : scriptList) {
             for (final String s : script.getScript().migrationScripts()) {
                 if (s != null && !s.trim().isEmpty()) {
-                    final ClassPathResource file = new ClassPathResource(databaseFileLocation + "/" + s + "." + databaseFileExtension);
+                    final ClassPathResource file = new ClassPathResource(filesLocation + "/" + s + "." + filesExtension);
                     if (file.exists()) {
                         script.getResources().add(file);
                     } else {
-                        log.warn("file [{}] does not exist", "migration/" + s + "." + databaseFileExtension);
+                        log.warn("file [{}] does not exist", "migration/" + s + "." + filesExtension);
                     }
                 }
             }
