@@ -9,7 +9,7 @@
 	<packaging>jar</packaging>
 
 	<name>migrationmanager</name>
-	<description>Demo project for Migration Manager with Spring Boot and MySQL database</description>
+	<description>Demo project for Migration Manager with Spring Boot and SQL database</description>
 
     <developers>
         <developer>
